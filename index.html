@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Open any URL</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:20px}
+    input{width:100%;padding:10px;font-size:16px;box-sizing:border-box}
+    .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    button{flex:1;padding:10px;font-size:16px}
+    small{color:#555}
+  </style>
+</head>
+<body>
+  <h1>Open any URL</h1>
+  <p>Type a URL (including the scheme like <code>https://</code>, <code>file://</code>, <code>chrome://</code>) then choose how to open it.</p>
+
+  <input id="url" placeholder="https://example.com or file:///sdcard/file.html" />
+
+  <div class="row">
+    <button id="openSame">Open in same tab</button>
+    <button id="openNew">Open in new tab</button>
+  </div>
+
+  <div class="row">
+    <button id="tryAnchor">Open via anchor click</button>
+    <button id="tryIntent">Try Chrome intent</button>
+  </div>
+
+  <div class="row">
+    <button id="openSettings">Open Android App Settings</button>
+  </div>
+
+  <p><small>Note: Some URLs such as <code>chrome://</code> and <code>file://</code> may be blocked by the browser. The intent buttons generally only work in Chrome for Android.</small></p>
+
+  <script>
+    const input = document.getElementById('url');
+
+    function normalize(inputUrl) {
+      const s = inputUrl.trim();
+      if (!s) return '';
+      if (/^[a-zA-Z][\w+.-]*:/.test(s)) return s;
+      return 'http://' + s;
+    }
+
+    function fallbackAnchor(url, target = '_self') {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = target;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>a.remove(), 1000);
+    }
+
+    document.getElementById('openSame').onclick = () => {
+      const u = normalize(input.value);
+      if (!u) return alert('Enter a URL');
+      location.href = u;
+    };
+
+    document.getElementById('openNew').onclick = () => {
+      const u = normalize(input.value);
+      if (!u) return alert('Enter a URL');
+      window.open(u, '_blank');
+    };
+
+    document.getElementById('tryAnchor').onclick = () => {
+      const u = normalize(input.value);
+      if (!u) return alert('Enter a URL');
+      fallbackAnchor(u);
+    };
+
+    document.getElementById('tryIntent').onclick = () => {
+      const raw = input.value.trim();
+      if (!raw) return alert('Enter a URL');
+      const m = raw.match(/^([a-zA-Z][\w+.-]*):\/\/(.*)$/);
+      if (!m) return fallbackAnchor(normalize(raw));
+      const intentUrl = `intent://${m[2]}#Intent;scheme=${m[1]};package=com.android.chrome;end`;
+      location.href = intentUrl;
+    };
+
+    document.getElementById('openSettings').onclick = () => {
+      // This launches Android's "Apps" settings screen
+      const intentUrl = 'intent://settings#Intent;action=android.settings.APPLICATION_SETTINGS;end';
+      location.href = intentUrl;
+    };
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('openSame').click();
+    });
+  </script>
+</body>
+</html>
