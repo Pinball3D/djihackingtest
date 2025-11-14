@@ -10,12 +10,13 @@
     .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
     button{flex:1;padding:10px;font-size:16px}
     small{color:#555}
+    #fileInfo{margin-top:10px;font-size:14px;color:#333}
   </style>
 </head>
 <body>
   <h1>Open any URL</h1>
-  <p>Type a URL (including the scheme like <code>https://</code>, <code>file://</code>, <code>chrome://</code>) then choose how to open it.</p>
 
+  <p>Type a URL (https://, file://, chrome://, etc.)</p>
   <input id="url" placeholder="https://example.com or file:///sdcard/file.html" />
 
   <div class="row">
@@ -32,10 +33,15 @@
     <button id="openSettings">Open Android App Settings</button>
   </div>
 
-  <p><small>Note: Some URLs such as <code>chrome://</code> and <code>file://</code> may be blocked by the browser. The intent buttons generally only work in Chrome for Android.</small></p>
+  <h2>File Picker</h2>
+  <input id="filePicker" type="file" />
+
+  <div id="fileInfo"></div>
 
   <script>
     const input = document.getElementById('url');
+    const filePicker = document.getElementById('filePicker');
+    const fileInfo = document.getElementById('fileInfo');
 
     function normalize(inputUrl) {
       const s = inputUrl.trim();
@@ -82,7 +88,6 @@
     };
 
     document.getElementById('openSettings').onclick = () => {
-      // This launches Android's "Apps" settings screen
       const intentUrl = 'intent://settings#Intent;action=android.settings.APPLICATION_SETTINGS;end';
       location.href = intentUrl;
     };
@@ -90,6 +95,21 @@
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('openSame').click();
     });
+
+    // ---- FILE PICKER ----
+    filePicker.onchange = () => {
+      const file = filePicker.files[0];
+      if (!file) {
+        fileInfo.textContent = "No file picked";
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      fileInfo.innerHTML = `
+        <b>Selected file:</b> ${file.name}<br>
+        <button onclick="window.open('${url}', '_blank')">Open file</button>
+      `;
+    };
   </script>
 </body>
 </html>
